@@ -12,7 +12,12 @@ from .kbio_wrapper import (
 
 
 def safe_api_connect(
-    api, address: str, lockpath: str, retries: int, time_sleep: int
+    api,
+    address: str,
+    lockpath: str,
+    retries: int,
+    time_sleep: int,
+    logger: logging.Logger,
 ) -> tuple:
     """
     Attempt to establish a connection with the device, retrying if necessary.
@@ -44,17 +49,29 @@ def safe_api_connect(
         If the function fails to connect after the specified number of retries.
 
     """
+    logger.critical("NukP: start Safe_api_connect")
     for _ in range(retries):
         try:
+            logger.critical(f"NukP: Safe_api_connect try clause, attempt number {_}")
             with FileLock(lockpath, timeout=60):
+                logger.critical("NukP: Safe_api_connect FileLock clause")
                 id_, device_info = api.Connect(address)
                 return id_, device_info
         except Exception as e:
+            logger.critical("NukP: Safe_api_connect Except clause - before sleep")
             time.sleep(time_sleep)
+            logger.critical("NukP: Safe_api_connect Except clause - after sleep")
     raise Exception(f"Failed to connect after {retries} retries")
 
 
-def safe_api_disconnect(api, id_, lockpath: str, retries: int, time_sleep: int):
+def safe_api_disconnect(
+    api,
+    id_,
+    lockpath: str,
+    retries: int,
+    time_sleep: int,
+    logger: logging.Logger,
+):
     """
     Attempt to disconnect from the device, retrying if necessary.
 
@@ -80,12 +97,19 @@ def safe_api_disconnect(api, id_, lockpath: str, retries: int, time_sleep: int):
         If the function fails to disconnect after the specified number of retries.
 
     """
+    logger.critical("NukP: start Safe_api_disconnect")
     for _ in range(retries):
         try:
+            logger.critical(
+                f"NukP: Safe_api_disconnect try clause, this is attempt number {_}"
+            )
             with FileLock(lockpath, timeout=60):
+                logger.critical("NukP: Safe_api_disconnect FileLock clause")
                 api.Disconnect(id_)
         except Exception as e:
+            logger.critical("NukP: Safe_api_disconnect Except clause - before sleep")
             time.sleep(time_sleep)
+            logger.critical("NukP: Safe_api_disconnect Except clause - after sleep")
     raise Exception(f"Failed to disconnect after {retries} retries")
 
 
@@ -120,10 +144,12 @@ def get_status(
         Returns a tuple containing the timestamp, readiness status, and
         associated metadata.
     """
+    logger.critical("NukP: Start get_status")
     api = get_kbio_api(dllpath)
     metadata = {}
     metadata["dll_version"] = api.GetLibVersion()
     try:
+        logger.critical("NukP: Start get_status - try loop")
         logger.info(f"connecting to '{address}:{channel}'")
         id_, device_info = safe_api_connect(api, address, lockpath, retries, time_sleep)
         logger.info(f"getting status of '{address}:{channel}'")
@@ -180,8 +206,11 @@ def get_data(
         Returns a tuple containing the timestamp and associated metadata.
 
     """
+    logger.critical("NukP: Start get_data")
     api = get_kbio_api(dllpath)
+    logger.critical("NukP: start get_data")
     try:
+        logger.critical("NukP: get_data - try loop")
         logger.info(f"connecting to '{address}:{channel}'")
         id_, device_info = safe_api_connect(api, address, lockpath, retries, time_sleep)
         logger.info(f"getting data from '{address}:{channel}'")
@@ -240,11 +269,13 @@ def start_job(
     timestamp
         A timestamp corresponding to the start of the job execution.
     """
+    logger.critical("NukP: Start start_job")
     api = get_kbio_api(dllpath)
     logger.debug("translating payload to ECC")
     eccpars = payload_to_ecc(api, payload, capacity)
     ntechs = len(eccpars)
     try:
+        logger.critical("NukP: start_job try clause")
         first = True
         last = False
         ti = 1
@@ -304,8 +335,10 @@ def stop_job(
     timestamp
         A timestamp corresponding to the start of the job execution.
     """
+    logger.critical("NukP: Start stop_job")
     api = get_kbio_api(dllpath)
     try:
+        logger.critical("NukP: stop_job - try clause")
         logger.info(f"connecting to '{address}:{channel}'")
         id_, device_info = safe_api_connect(api, address, lockpath, retries, time_sleep)
         logger.info(f"stopping run on '{address}:{channel}'")
