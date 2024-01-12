@@ -151,11 +151,13 @@ def get_status(
     try:
         logger.critical("NukP: Start get_status - try loop")
         logger.info(f"connecting to '{address}:{channel}'")
-        id_, device_info = safe_api_connect(api, address, lockpath, retries, time_sleep)
+        id_, device_info = safe_api_connect(
+            api, address, lockpath, retries, time_sleep, logger
+        )
         logger.info(f"getting status of '{address}:{channel}'")
         channel_info = api.GetChannelInfo(id_, channel)
         logger.info(f"disconnecting from '{address}:{channel}'")
-        safe_api_disconnect(api, id_, lockpath, retries, time_sleep)
+        safe_api_disconnect(api, id_, lockpath, retries, time_sleep, logger)
     except Exception as e:
         logger.critical(f"{e=}")
     metadata["device_model"] = device_info.model
@@ -212,11 +214,13 @@ def get_data(
     try:
         logger.critical("NukP: get_data - try loop")
         logger.info(f"connecting to '{address}:{channel}'")
-        id_, device_info = safe_api_connect(api, address, lockpath, retries, time_sleep)
+        id_, device_info = safe_api_connect(
+            api, address, lockpath, retries, time_sleep, logger
+        )
         logger.info(f"getting data from '{address}:{channel}'")
         data = api.GetData(id_, channel)
         logger.info(f"disconnecting from '{address}:{channel}'")
-        safe_api_disconnect(api, id_, lockpath, retries, time_sleep)
+        safe_api_disconnect(api, id_, lockpath, retries, time_sleep, logger)
     except Exception as e:
         logger.critical(f"{e=}")
     dt = datetime.now(timezone.utc)
@@ -280,7 +284,9 @@ def start_job(
         last = False
         ti = 1
         logger.info(f"connecting to '{address}:{channel}'")
-        id_, device_info = safe_api_connect(api, address, lockpath, retries, time_sleep)
+        id_, device_info = safe_api_connect(
+            api, address, lockpath, retries, time_sleep, logger
+        )
         for techname, pars in eccpars:
             if ti == ntechs:
                 last = True
@@ -294,7 +300,7 @@ def start_job(
         logger.info(f"starting run on '{address}:{channel}'")
         api.StartChannel(id_, channel)
         logger.info(f"disconnecting from '{address}:{channel}'")
-        safe_api_disconnect(api, id_, lockpath, retries, time_sleep)
+        safe_api_disconnect(api, id_, lockpath, retries, time_sleep, logger)
     except Exception as e:
         logger.critical(f"{e=}")
     dt = datetime.now(timezone.utc)
@@ -340,11 +346,13 @@ def stop_job(
     try:
         logger.critical("NukP: stop_job - try clause")
         logger.info(f"connecting to '{address}:{channel}'")
-        id_, device_info = safe_api_connect(api, address, lockpath, retries, time_sleep)
+        id_, device_info = safe_api_connect(
+            api, address, lockpath, retries, time_sleep, logger
+        )
         logger.info(f"stopping run on '{address}:{channel}'")
         api.StopChannel(id_, channel)
         logger.info(f"run stopped at '{dt}'")
-        safe_api_disconnect(api, id_, lockpath, retries, time_sleep)
+        safe_api_disconnect(api, id_, lockpath, retries, time_sleep, logger)
     except Exception as e:
         logger.critical(f"{e=}")
     if jobqueue:
